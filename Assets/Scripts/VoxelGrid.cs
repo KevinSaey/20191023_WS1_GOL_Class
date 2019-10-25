@@ -71,22 +71,24 @@ public class VoxelGrid
         {
             Vector3Int neighbourIndex = index + direction;
 
-            bool exists = true;
-
-            if (exists && neighbourIndex.x < 0) exists = false;
-            if (exists && neighbourIndex.y < 0) exists = false;
-            if (exists && neighbourIndex.z < 0) exists = false;
-            if (exists && neighbourIndex.x > _gridDimensions.x - 1) exists = false;
-            if (exists && neighbourIndex.y > _gridDimensions.y - 1) exists = false;
-            if (exists && neighbourIndex.z > _gridDimensions.z - 1) exists = false;
-
-            if (exists)
+            if (CheckIndex(neighbourIndex))
             {
                 neighbours.Add(_grid[neighbourIndex.x, neighbourIndex.y, neighbourIndex.z]);
             }
         }
 
         return neighbours;
+    }
+
+    bool CheckIndex(Vector3Int neighbourIndex)
+    {
+        if (neighbourIndex.x < 0) return false;
+        if (neighbourIndex.y < 0) return false;
+        if (neighbourIndex.z < 0) return false;
+        if (neighbourIndex.x > _gridDimensions.x - 1) return false;
+        if (neighbourIndex.y > _gridDimensions.y - 1) return false;
+        if (neighbourIndex.z > _gridDimensions.z - 1) return false;
+        return true;
     }
 
     int GetNumberOfAliveNeighbours(List<Voxel> neighbours)
@@ -118,6 +120,6 @@ public class VoxelGrid
         }
 
         foreach (var voxel in _grid) voxel.Status.Alive = voxel.Status.NextState;
-        
+
     }
 }
