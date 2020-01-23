@@ -340,6 +340,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f469888fd592c96498e14cdb9339fbd9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _gridDimensions: {x: 25, y: 1, z: 25}
+  _gridDimensions: {x: 25, y: 25, z: 25}
   _voxelSize: 0.4
   _margin: 0.1
