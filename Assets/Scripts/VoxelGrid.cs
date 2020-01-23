@@ -7,6 +7,7 @@ public class VoxelGrid
     Vector3Int _gridDimensions;
     float _voxelSize;
     float _margin;
+    bool _twoD = true;
 
     Voxel[,,] _grid;
 
@@ -39,7 +40,7 @@ public class VoxelGrid
 
     public void SetRandomAlive(int PercentageAlive)
     {
-        int numberAlive = _gridDimensions.x * _gridDimensions.z * PercentageAlive / 100;
+        int numberAlive = _gridDimensions.x * _gridDimensions.y * _gridDimensions.z * PercentageAlive / 100;
 
         for (int i = 0; i < numberAlive; i++)
         {
@@ -66,6 +67,30 @@ public class VoxelGrid
             new Vector3Int(0, 0, 1),//North
             new Vector3Int(1, 0, 1)//NorthEast
         };
+        //up
+        if (!_twoD)
+        {
+            directions.AddRange(new List<Vector3Int>{
+            new Vector3Int(1, 1, 0),//East
+            new Vector3Int(1, 1, -1),//SouthEast
+            new Vector3Int(0, 1, -1),//South
+            new Vector3Int(-1, 1, -1),//SouthWest
+            new Vector3Int(-1, 1, 0),//West
+            new Vector3Int(-1, 1, 1),//NorthWest
+            new Vector3Int(0, 1, 1),//North
+            new Vector3Int(1, 1, 1),//NorthEast
+            //down
+            new Vector3Int(1, -1, 0),//East
+            new Vector3Int(1, -1, -1),//SouthEast
+            new Vector3Int(0, -1, -1),//South
+            new Vector3Int(-1, -1, -1),//SouthWest
+            new Vector3Int(-1, -1, 0),//West
+            new Vector3Int(-1, -1, 1),//NorthWest
+            new Vector3Int(0, -1, 1),//North
+            new Vector3Int(1, -1, 1)//NorthEast
+            });
+        }
+
 
         foreach (var direction in directions)
         {
@@ -111,12 +136,20 @@ public class VoxelGrid
 
             nrOfALiveNeighbours = GetNumberOfAliveNeighbours(GetNeighbours(voxel.Index));
 
-            if (nrOfALiveNeighbours < 2) voxel.Status.NextState = false;
-            else if (nrOfALiveNeighbours > 3) voxel.Status.NextState = false;
-            else if (nrOfALiveNeighbours == 3) voxel.Status.NextState = true;
-            else voxel.Status.NextState = voxel.Status.Alive;
-
-
+            if (_twoD)
+            {
+                if (nrOfALiveNeighbours < 2) voxel.Status.NextState = false;
+                else if (nrOfALiveNeighbours > 3) voxel.Status.NextState = false;
+                else if (nrOfALiveNeighbours == 3) voxel.Status.NextState = true;
+                else voxel.Status.NextState = voxel.Status.Alive;
+            }
+            else
+            {
+                if (nrOfALiveNeighbours < 4) voxel.Status.NextState = false;
+                else if (nrOfALiveNeighbours > 5) voxel.Status.NextState = false;
+                else if (nrOfALiveNeighbours == 5) voxel.Status.NextState = true;
+                else voxel.Status.NextState = voxel.Status.Alive;
+            }
         }
 
         foreach (var voxel in _grid) voxel.Status.Alive = voxel.Status.NextState;

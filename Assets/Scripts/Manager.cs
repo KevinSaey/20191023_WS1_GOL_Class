@@ -21,7 +21,7 @@ public class Manager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-         if(Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
@@ -45,7 +45,7 @@ public class Manager : MonoBehaviour
         int buttonWidth = 170;
         int buttonCounter = 0;
 
-        if (GUI.Button(new Rect(padding, padding + ((buttonHeight+padding) * buttonCounter++), buttonWidth, buttonHeight), "Generate Random Alive"))
+        if (GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++), buttonWidth, buttonHeight), "Generate Random Alive"))
         {
             _grid.SetRandomAlive(50);
         }
