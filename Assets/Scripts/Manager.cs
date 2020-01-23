@@ -4,18 +4,22 @@ using UnityEngine;
 
 public class Manager : MonoBehaviour
 {
+    private VoxelGrid _grid;
     [SerializeField]
-    Vector3Int _gridDimensions;
+    private Vector3Int _gridDimension;
     [SerializeField]
-    float _voxelSize;
+    private float _voxelSize;
     [SerializeField]
-    float _margin;
+    private float _margin;
 
-    VoxelGrid _grid;
+    private bool _running = false;
+    private IEnumerator _runGameOfLife;
+
     // Start is called before the first frame update
     void Start()
     {
-        _grid = new VoxelGrid(_gridDimensions, _voxelSize, _margin);
+        _grid = new VoxelGrid(_gridDimension, _voxelSize, _margin);
+        _runGameOfLife = RunGameOfLife(0.1f);
     }
 
     // Update is called once per frame
@@ -23,15 +27,16 @@ public class Manager : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
+            Debug.Log("Clicked");
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit))
             {
-                // the object identified by hit.transform was clicked
-                // do whatever you want
                 if (hit.transform.tag == "Voxel")
                 {
-                    VoxelStatus status = hit.transform.gameObject.GetComponent<VoxelStatus>();
+                    Debug.Log("hooray, I hit a voxel");
+                    GameObject hitObject = hit.transform.gameObject;
+                    var status = hitObject.GetComponent<VoxelStatus>();
                     status.Alive = !status.Alive;
                 }
             }
@@ -45,15 +50,31 @@ public class Manager : MonoBehaviour
         int buttonWidth = 170;
         int buttonCounter = 0;
 
-        if (GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++), buttonWidth, buttonHeight), "Generate Random Alive"))
+        if (GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
+            buttonWidth, buttonHeight), "Generate Random Alive"))
         {
+            _grid.ResetGrid(false);
             _grid.SetRandomAlive(50);
+        }
+        if (GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
+            buttonWidth, buttonHeight), "Invert grid"))
+        {
+            _grid.InvertGrid();
         }
 
         if (GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
-            buttonWidth, buttonHeight), "Start Game of Life"))
+            buttonWidth, buttonHeight), 
+            _running?"Stop game of life" :"Star game of life"))
         {
-            StartCoroutine(RunGameOfLife(0.1f));
+            if (_running)
+            {
+                StopCoroutine(_runGameOfLife);
+            }
+            else
+            {
+                StartCoroutine(_runGameOfLife);
+            }
+            _running = !_running;
         }
     }
 

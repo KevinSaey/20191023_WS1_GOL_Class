@@ -4,12 +4,11 @@ using UnityEngine;
 
 public class VoxelGrid
 {
-    Vector3Int _gridDimensions;
-    float _voxelSize;
-    float _margin;
-    bool _twoD = true;
+    private Vector3Int _gridDimensions;
+    private float _voxelSize;
+    private float _margin;
 
-    Voxel[,,] _grid;
+    private Voxel[,,] _grid;
 
     public VoxelGrid(Vector3Int gridDimensions, float voxelSize, float margin)
     {
@@ -22,20 +21,14 @@ public class VoxelGrid
 
     private void InitialiseGrid()
     {
-        //Here we will create our grid
-
+        Debug.Log("Initialising grid");
         _grid = new Voxel[_gridDimensions.x, _gridDimensions.y, _gridDimensions.z];
 
+        //Create grid
         for (int x = 0; x < _gridDimensions.x; x++)
-        {
             for (int y = 0; y < _gridDimensions.y; y++)
-            {
                 for (int z = 0; z < _gridDimensions.z; z++)
-                {
                     _grid[x, y, z] = new Voxel(new Vector3Int(x, y, z), _voxelSize, _margin, _gridDimensions);
-                }
-            }
-        }
     }
 
     public void SetRandomAlive(int PercentageAlive)
@@ -49,110 +42,92 @@ public class VoxelGrid
             int z = Random.Range(0, _gridDimensions.z);
 
             if (_grid[x, y, z].Status.Alive) i--;
-            else _grid[x, y, z].Status.Alive = true;
+            _grid[x, y, z].Status.Alive = true;
         }
     }
 
-    List<Voxel> GetNeighbours(Vector3Int index)
+    public void ResetGrid(bool alive)
+    {
+        foreach (var voxel in _grid)
+        {
+            voxel.Status.Alive = alive;
+        }
+    }
+
+    public void InvertGrid()
+    {
+        foreach (var voxel in _grid)
+        {
+            voxel.Status.Alive = !voxel.Status.Alive;
+        }
+    }
+
+    private List<Voxel> GetNeighbours(Vector3Int index)
     {
         List<Voxel> neighbours = new List<Voxel>();
-        List<Vector3Int> directions = new List<Vector3Int>
+        List<Vector3Int> directions = new List<Vector3Int>()
         {
-            new Vector3Int(1, 0, 0),//East
-            new Vector3Int(1, 0, -1),//SouthEast
-            new Vector3Int(0, 0, -1),//South
-            new Vector3Int(-1, 0, -1),//SouthWest
-            new Vector3Int(-1, 0, 0),//West
-            new Vector3Int(-1, 0, 1),//NorthWest
-            new Vector3Int(0, 0, 1),//North
-            new Vector3Int(1, 0, 1)//NorthEast
+            new Vector3Int (1,0,0),//East,
+            new Vector3Int (1,0,-1),//SouthEast,
+            new Vector3Int (0,0,-1),//South,
+            new Vector3Int (-1,0,-1),//SouthWest,
+            new Vector3Int (-1,0,0),//West,
+            new Vector3Int (-1,0,1),//NorthWest,
+            new Vector3Int (0,0,1),//North,
+            new Vector3Int (1,0,1)//NorthEast,
         };
-        //up
-        if (!_twoD)
-        {
-            directions.AddRange(new List<Vector3Int>{
-            new Vector3Int(1, 1, 0),//East
-            new Vector3Int(1, 1, -1),//SouthEast
-            new Vector3Int(0, 1, -1),//South
-            new Vector3Int(-1, 1, -1),//SouthWest
-            new Vector3Int(-1, 1, 0),//West
-            new Vector3Int(-1, 1, 1),//NorthWest
-            new Vector3Int(0, 1, 1),//North
-            new Vector3Int(1, 1, 1),//NorthEast
-            //down
-            new Vector3Int(1, -1, 0),//East
-            new Vector3Int(1, -1, -1),//SouthEast
-            new Vector3Int(0, -1, -1),//South
-            new Vector3Int(-1, -1, -1),//SouthWest
-            new Vector3Int(-1, -1, 0),//West
-            new Vector3Int(-1, -1, 1),//NorthWest
-            new Vector3Int(0, -1, 1),//North
-            new Vector3Int(1, -1, 1)//NorthEast
-            });
-        }
-
 
         foreach (var direction in directions)
         {
             Vector3Int neighbourIndex = index + direction;
-
             if (CheckIndex(neighbourIndex))
-            {
                 neighbours.Add(_grid[neighbourIndex.x, neighbourIndex.y, neighbourIndex.z]);
-            }
         }
 
         return neighbours;
     }
 
-    bool CheckIndex(Vector3Int neighbourIndex)
+    private bool CheckIndex(Vector3Int index)
     {
-        if (neighbourIndex.x < 0) return false;
-        if (neighbourIndex.y < 0) return false;
-        if (neighbourIndex.z < 0) return false;
-        if (neighbourIndex.x > _gridDimensions.x - 1) return false;
-        if (neighbourIndex.y > _gridDimensions.y - 1) return false;
-        if (neighbourIndex.z > _gridDimensions.z - 1) return false;
+        if (index.x < 0) return false;
+        if (index.y < 0) return false;
+        if (index.z < 0) return false;
+        if (index.x > _gridDimensions.x - 1) return false;
+        if (index.y > _gridDimensions.y - 1) return false;
+        if (index.z > _gridDimensions.z - 1) return false;
+
         return true;
-    }
-
-    int GetNumberOfAliveNeighbours(List<Voxel> neighbours)
-    {
-        int numberOfAliveNeighbours = 0;
-
-        foreach (var neighbour in neighbours)
-        {
-            if (neighbour.Status.Alive) numberOfAliveNeighbours++;
-        }
-
-        return numberOfAliveNeighbours;
     }
 
     public void UpdateGrid()
     {
         foreach (var voxel in _grid)
         {
-            int nrOfALiveNeighbours;
+            GameOfLifeRules(voxel);
+        }
+        foreach (var voxel in _grid) voxel.Status.Alive = voxel.Status.NextStatus;
 
-            nrOfALiveNeighbours = GetNumberOfAliveNeighbours(GetNeighbours(voxel.Index));
+    }
 
-            if (_twoD)
-            {
-                if (nrOfALiveNeighbours < 2) voxel.Status.NextState = false;
-                else if (nrOfALiveNeighbours > 3) voxel.Status.NextState = false;
-                else if (nrOfALiveNeighbours == 3) voxel.Status.NextState = true;
-                else voxel.Status.NextState = voxel.Status.Alive;
-            }
-            else
-            {
-                if (nrOfALiveNeighbours < 4) voxel.Status.NextState = false;
-                else if (nrOfALiveNeighbours > 5) voxel.Status.NextState = false;
-                else if (nrOfALiveNeighbours == 5) voxel.Status.NextState = true;
-                else voxel.Status.NextState = voxel.Status.Alive;
-            }
+    private void GameOfLifeRules(Voxel voxel)
+    {
+        int nrOfAliveNeighbours;
+
+        nrOfAliveNeighbours = GetNumberOfAliveNeighbours(GetNeighbours(voxel.Index));
+
+        if (nrOfAliveNeighbours < 2) voxel.Status.NextStatus = false;
+        else if (nrOfAliveNeighbours > 3) voxel.Status.NextStatus = false;
+        else if (nrOfAliveNeighbours == 3) voxel.Status.NextStatus = true;
+    }
+
+    private int GetNumberOfAliveNeighbours(List<Voxel> neighbours)
+    {
+        int nrOfAliveNeighbours = 0;
+        foreach (var vox in neighbours)
+        {
+            if (vox.Status.Alive) nrOfAliveNeighbours++;
         }
 
-        foreach (var voxel in _grid) voxel.Status.Alive = voxel.Status.NextState;
-
+        return nrOfAliveNeighbours;
     }
 }

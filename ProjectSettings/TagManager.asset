@@ -5,7 +5,6 @@ TagManager:
   serializedVersion: 2
   tags:
   - Voxel
-  - Vowel
   layers:
   - Default
   - TransparentFX
