@@ -11,6 +11,8 @@ public class Manager : MonoBehaviour
     private float _voxelSize;
     [SerializeField]
     private float _margin;
+    [SerializeField]
+    private float _speed = 0.1f;
 
     private bool _running = false;
     private IEnumerator _runGameOfLife;
@@ -19,7 +21,7 @@ public class Manager : MonoBehaviour
     void Start()
     {
         _grid = new VoxelGrid(_gridDimension, _voxelSize, _margin);
-        _runGameOfLife = RunGameOfLife(0.1f);
+        _runGameOfLife = RunGameOfLife();
     }
 
     // Update is called once per frame
@@ -27,14 +29,12 @@ public class Manager : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            Debug.Log("Clicked");
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit))
             {
                 if (hit.transform.tag == "Voxel")
                 {
-                    Debug.Log("hooray, I hit a voxel");
                     GameObject hitObject = hit.transform.gameObject;
                     var status = hitObject.GetComponent<VoxelStatus>();
                     status.Alive = !status.Alive;
@@ -55,6 +55,7 @@ public class Manager : MonoBehaviour
         {
             _grid.ResetGrid(false);
             _grid.SetRandomAlive(50);
+            
         }
         if (GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
             buttonWidth, buttonHeight), "Invert grid"))
@@ -63,8 +64,8 @@ public class Manager : MonoBehaviour
         }
 
         if (GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
-            buttonWidth, buttonHeight), 
-            _running?"Stop game of life" :"Star game of life"))
+            buttonWidth, buttonHeight),
+            _running ? "Stop game of life" : "Start game of life"))
         {
             if (_running)
             {
@@ -76,15 +77,28 @@ public class Manager : MonoBehaviour
             }
             _running = !_running;
         }
+        _speed = GUI.HorizontalSlider(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
+            buttonWidth, buttonHeight), _speed, 0.01f, 1f);
+
+        GUI.Label(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
+            buttonWidth, buttonHeight), (_grid.CurrentLayer+1).ToString());
     }
 
-    IEnumerator RunGameOfLife(float time)
+    IEnumerator RunGameOfLife()
     {
         while (true)
         {
-            _grid.UpdateGrid();
+            if (_grid.CurrentLayer == _gridDimension.y-1)
+            {
+                _running = false;
+                StopCoroutine(_runGameOfLife);
+            }
 
-            yield return new WaitForSeconds(time);
+            _grid.UpdateGrid();
+            
+            
+
+            yield return new WaitForSeconds(_speed);
         }
     }
 }

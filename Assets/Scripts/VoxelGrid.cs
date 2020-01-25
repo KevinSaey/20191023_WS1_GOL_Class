@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using System.Linq;
+
 public class VoxelGrid
 {
     private Vector3Int _gridDimensions;
     private float _voxelSize;
     private float _margin;
 
+    public int CurrentLayer = 0;
     private Voxel[,,] _grid;
 
     public VoxelGrid(Vector3Int gridDimensions, float voxelSize, float margin)
@@ -21,7 +24,6 @@ public class VoxelGrid
 
     private void InitialiseGrid()
     {
-        Debug.Log("Initialising grid");
         _grid = new Voxel[_gridDimensions.x, _gridDimensions.y, _gridDimensions.z];
 
         //Create grid
@@ -33,16 +35,15 @@ public class VoxelGrid
 
     public void SetRandomAlive(int PercentageAlive)
     {
-        int numberAlive = _gridDimensions.x * _gridDimensions.y * _gridDimensions.z * PercentageAlive / 100;
+        int numberAlive = _gridDimensions.x * _gridDimensions.z * PercentageAlive / 100;
 
         for (int i = 0; i < numberAlive; i++)
         {
             int x = Random.Range(0, _gridDimensions.x);
-            int y = Random.Range(0, _gridDimensions.y);
             int z = Random.Range(0, _gridDimensions.z);
 
-            if (_grid[x, y, z].Status.Alive) i--;
-            _grid[x, y, z].Status.Alive = true;
+            if (_grid[x, 0, z].Status.Alive) i--;
+            _grid[x, 0, z].Status.Alive = true;
         }
     }
 
@@ -51,7 +52,9 @@ public class VoxelGrid
         foreach (var voxel in _grid)
         {
             voxel.Status.Alive = alive;
+            voxel.Status.NextStatus = false;
         }
+        CurrentLayer = 0;
     }
 
     public void InvertGrid()
@@ -101,11 +104,30 @@ public class VoxelGrid
 
     public void UpdateGrid()
     {
-        foreach (var voxel in _grid)
+
+        /*foreach (var voxel in _grid)
         {
             GameOfLifeRules(voxel);
+        }*/
+
+        for (int x = 0; x < _gridDimensions.x; x++)
+        {
+            for (int z = 0; z < _gridDimensions.z; z++)
+            {
+                //only run game of life on the first layer
+                GameOfLifeRules(_grid[x, 0, z]);
+
+                for (int i = CurrentLayer; i > 0; i--)
+                {
+                    _grid[x, i, z].Status.NextStatus = _grid[x, i - 1, z].Status.Alive;
+                }
+            }
         }
+        CurrentLayer++;
+
+
         foreach (var voxel in _grid) voxel.Status.Alive = voxel.Status.NextStatus;
+
 
     }
 

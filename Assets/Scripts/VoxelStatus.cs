@@ -8,12 +8,10 @@ public class VoxelStatus : MonoBehaviour
     {
         get
         {
-            Debug.Log("Getting the status");
             return _alive;
         }
         set
         {
-            Debug.Log("Setting the status");
             this.GetComponent<MeshRenderer>().enabled = value;
             _alive = value;
         }
