@@ -15,6 +15,9 @@ public class VoxelGrid
 
     public int CurrentLayer = 0;
     private UndirectedGraph<Voxel, Edge<Voxel>> _graph = new UndirectedGraph<Voxel, Edge<Voxel>>();
+    private Material[] _materials;
+    private Mesh _voxelMesh;
+
 
     public Voxel[,,] Voxels;
     public Corner[,,] Corners;
@@ -23,14 +26,17 @@ public class VoxelGrid
 
     public Vector3 Corner;
 
-    public VoxelGrid(Vector3Int gridDimensions, float voxelSize, float margin)
+    public VoxelGrid(Vector3Int gridDimensions, float voxelSize, float margin, Material[] materials, Mesh voxelMesh)
     {
+        _materials = materials;
+        _voxelMesh = voxelMesh;
         GridDimensions = gridDimensions;
         VoxelSize = voxelSize;
         Margin = margin;
+        
 
         Corner = -new Vector3(gridDimensions.x, -voxelSize / 2, gridDimensions.y) * (VoxelSize + Margin) / 2;
-        
+
         InitialiseGrid();
     }
 
@@ -53,7 +59,7 @@ public class VoxelGrid
         for (int x = 0; x < GridDimensions.x; x++)
             for (int y = 0; y < GridDimensions.y; y++)
                 for (int z = 0; z < GridDimensions.z; z++)
-                    Voxels[x, y, z] = new Voxel(new Vector3Int(x, y, z), VoxelSize, Margin, GridDimensions,Corner);
+                    Voxels[x, y, z] = new Voxel(new Vector3Int(x, y, z), VoxelSize, Margin, GridDimensions, Corner);
     }
 
     private void MakeCorners()
@@ -201,12 +207,6 @@ public class VoxelGrid
 
     public void UpdateGrid()
     {
-
-        /*foreach (var voxel in _grid)
-        {
-            GameOfLifeRules(voxel);
-        }*/
-
         for (int x = 0; x < GridDimensions.x; x++)
         {
             for (int z = 0; z < GridDimensions.z; z++)
@@ -221,11 +221,10 @@ public class VoxelGrid
             }
         }
         CurrentLayer++;
-
-
+        
         foreach (var voxel in Voxels) voxel.Status.Alive = voxel.Status.NextStatus;
 
-
+        ColorVoxels();
     }
 
     private void GameOfLifeRules(Voxel voxel)
@@ -276,32 +275,44 @@ public class VoxelGrid
     }
 
     //Explain linq
-
     public void RemoveSingleVoxels()
     {
-        var singleVoxels = GetVoxels().Where(v =>v.Status.Alive&& v.Faces.Where(f => f.IsActive).Count() == 0);
+        var singleVoxels = GetVoxels().Where(v => v.Status.Alive && v.NumberOfAliveFaces == 0);
         foreach (var vox in singleVoxels) vox.Status.Alive = false;
-        
-        
-        /*foreach (var voxel in GetVoxels())
-        {
-            int activeFaces = 0;
-            foreach (var face in voxel.Faces)
-            {
-                if (face.IsActive) activeFaces++;
-            }
-
-            if (activeFaces == 0) voxel.Status.Alive = false;
-        }*/
-
     }
+
+
+    //public void RemoveSingleVoxels()
+    //{
+    //    var singleVoxels = GetVoxels().Where(v =>v.Status.Alive&& v.Faces.Where(f => f.IsActive).Count() == 0);
+    //    foreach (var vox in singleVoxels) vox.Status.Alive = false;
+
+
+    //    /*foreach (var voxel in GetVoxels())
+    //    {
+    //        int activeFaces = 0;
+    //        foreach (var face in voxel.Faces)
+    //        {
+    //            if (face.IsActive) activeFaces++;
+    //        }
+
+    //        if (activeFaces == 0) voxel.Status.Alive = false;
+    //    }*/
+
+    //}
 
     public void CreateGraph()
     {
         _graph.AddVertexRange(GetVoxels().Where(v => v.Status.Alive));
-        _graph.AddEdgeRange(GetFaces().Where(f => f.IsActive).Select(f=> new Edge<Voxel>(f.Voxels[0],f.Voxels[1])));
-        
+        _graph.AddEdgeRange(GetFaces().Where(f => f.IsActive).Select(f => new Edge<Voxel>(f.Voxels[0], f.Voxels[1])));
     }
 
-    
+    public void ColorVoxels()
+    {
+        foreach (var vox in Voxels)
+        {
+            vox.Status.GOMaterial = _materials[vox.NumberOfAliveFaces];
+            vox.Status.VoxelMesh = _voxelMesh;
+        }
+    }
 }

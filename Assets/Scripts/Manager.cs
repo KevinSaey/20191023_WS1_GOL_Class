@@ -13,6 +13,10 @@ public class Manager : MonoBehaviour
     private float _margin;
     [SerializeField]
     private float _speed = 0.1f;
+    [SerializeField]
+    private Material[] _materials = new Material[6];
+    [SerializeField]
+    private Mesh _voxelMesh;
 
     private bool _running = false;
     private IEnumerator _runGameOfLife;
@@ -20,7 +24,7 @@ public class Manager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        _grid = new VoxelGrid(_gridDimension, _voxelSize, _margin);
+        _grid = new VoxelGrid(_gridDimension, _voxelSize, _margin, _materials,_voxelMesh);
         _runGameOfLife = RunGameOfLife();
     }
 

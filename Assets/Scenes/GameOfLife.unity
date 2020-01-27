@@ -485,6 +485,51 @@ MonoBehaviour:
   blendDistance: 0
   weight: 1
   priority: 0
+--- !u!1 &1724344611
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1724344613}
+  - component: {fileID: 1724344612}
+  m_Layer: 0
+  m_Name: Recorder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1724344612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1724344611}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74cfe2a2da630cf44a3bcf24b6db0e44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  EnableCapture: 0
+  _interval: 0.2
+--- !u!4 &1724344613
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1724344611}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.7337427, y: 7.2814145, z: -4.5256643}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2146219283
 GameObject:
   m_ObjectHideFlags: 0
@@ -518,6 +563,15 @@ MonoBehaviour:
   _voxelSize: 0.5
   _margin: 0.02
   _speed: 0.2
+  _materials:
+  - {fileID: 2100000, guid: 05c5312076521314eb3b799e9cb46561, type: 2}
+  - {fileID: 2100000, guid: 6b4767075a6ac5e43b2dad065f74e3c1, type: 2}
+  - {fileID: 2100000, guid: 8d1dd45dde3a1d14482dc9c12661efd9, type: 2}
+  - {fileID: 2100000, guid: 807b61c337860bd4e8783c51a4217766, type: 2}
+  - {fileID: 2100000, guid: 847aabf5f03de2e47b350c3281d08ab9, type: 2}
+  - {fileID: 2100000, guid: 3709bacc7c5517f42838d38d883a1b36, type: 2}
+  _voxelMesh: {fileID: -2432090755550338912, guid: 0f15673dc2bae6d409ca00bf3db92cf4,
+    type: 3}
 --- !u!4 &2146219285
 Transform:
   m_ObjectHideFlags: 0

@@ -16,6 +16,23 @@ public class VoxelStatus : MonoBehaviour
             _alive = value;
         }
     }
+    
+    public Material GOMaterial
+    {
+        set
+        {
+            this.GetComponent<MeshRenderer>().material = value;
+        }
+    }
+
+    public Mesh VoxelMesh
+    {
+        set
+        {
+            this.GetComponent<MeshFilter>().mesh = value;
+        }
+    }
+
 
     private bool _alive = true;
     public bool NextStatus = false;
