@@ -1,55 +1,152 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 using System.Linq;
+using QuickGraph;
 
 public class VoxelGrid
 {
-    private Vector3Int _gridDimensions;
-    private float _voxelSize;
-    private float _margin;
+    public Vector3Int GridDimensions;
+    public float VoxelSize;
+    public float Margin;
 
     public int CurrentLayer = 0;
-    private Voxel[,,] _grid;
+    private UndirectedGraph<Voxel, Edge<Voxel>> _graph = new UndirectedGraph<Voxel, Edge<Voxel>>();
+
+    public Voxel[,,] Voxels;
+    public Corner[,,] Corners;
+    public Face[][,,] Faces = new Face[3][,,];
+    public Edge[][,,] Edges = new Edge[3][,,];
+
+    public Vector3 Corner;
 
     public VoxelGrid(Vector3Int gridDimensions, float voxelSize, float margin)
     {
-        _gridDimensions = gridDimensions;
-        _voxelSize = voxelSize;
-        _margin = margin;
+        GridDimensions = gridDimensions;
+        VoxelSize = voxelSize;
+        Margin = margin;
 
+        Corner = -new Vector3(gridDimensions.x, -voxelSize / 2, gridDimensions.y) * (VoxelSize + Margin) / 2;
+        
         InitialiseGrid();
     }
 
     private void InitialiseGrid()
     {
-        _grid = new Voxel[_gridDimensions.x, _gridDimensions.y, _gridDimensions.z];
+        var watch = Stopwatch.StartNew();
+        Voxels = new Voxel[GridDimensions.x, GridDimensions.y, GridDimensions.z];
 
+        MakeVoxels();
+        MakeCorners();
+        MakeFaces();
+        MakeEdges();
+
+        Debug.Log($"Grid took: {watch.ElapsedMilliseconds} ms to create.\r\nGrid GridDimensions: {GridDimensions}, {GridDimensions.x * GridDimensions.y * GridDimensions.z} voxels.");
+    }
+
+    private void MakeVoxels()
+    {
         //Create grid
-        for (int x = 0; x < _gridDimensions.x; x++)
-            for (int y = 0; y < _gridDimensions.y; y++)
-                for (int z = 0; z < _gridDimensions.z; z++)
-                    _grid[x, y, z] = new Voxel(new Vector3Int(x, y, z), _voxelSize, _margin, _gridDimensions);
+        for (int x = 0; x < GridDimensions.x; x++)
+            for (int y = 0; y < GridDimensions.y; y++)
+                for (int z = 0; z < GridDimensions.z; z++)
+                    Voxels[x, y, z] = new Voxel(new Vector3Int(x, y, z), VoxelSize, Margin, GridDimensions,Corner);
+    }
+
+    private void MakeCorners()
+    {
+        // make corners
+        Corners = new Corner[GridDimensions.x + 1, GridDimensions.y + 1, GridDimensions.z + 1];
+
+        for (int x = 0; x < GridDimensions.x + 1; x++)
+            for (int y = 0; y < GridDimensions.y + 1; y++)
+                for (int z = 0; z < GridDimensions.z + 1; z++)
+                {
+                    Corners[x, y, z] = new Corner(new Vector3Int(x, y, z), this);
+                }
+    }
+
+    private void MakeFaces()
+    {
+        // make faces
+        Faces[0] = new Face[GridDimensions.x + 1, GridDimensions.y, GridDimensions.z];
+
+        for (int x = 0; x < GridDimensions.x + 1; x++)
+            for (int y = 0; y < GridDimensions.y; y++)
+                for (int z = 0; z < GridDimensions.z; z++)
+                {
+                    Faces[0][x, y, z] = new Face(x, y, z, Axis.X, this);
+                }
+
+        Faces[1] = new Face[GridDimensions.x, GridDimensions.y + 1, GridDimensions.z];
+
+        for (int x = 0; x < GridDimensions.x; x++)
+            for (int y = 0; y < GridDimensions.y + 1; y++)
+                for (int z = 0; z < GridDimensions.z; z++)
+                {
+                    Faces[1][x, y, z] = new Face(x, y, z, Axis.Y, this);
+                }
+
+        Faces[2] = new Face[GridDimensions.x, GridDimensions.y, GridDimensions.z + 1];
+
+        for (int x = 0; x < GridDimensions.x; x++)
+            for (int y = 0; y < GridDimensions.y; y++)
+                for (int z = 0; z < GridDimensions.z + 1; z++)
+                {
+                    Faces[2][x, y, z] = new Face(x, y, z, Axis.Z, this);
+                }
+    }
+
+    private void MakeEdges()
+    {
+        Edges[2] = new Edge[GridDimensions.x + 1, GridDimensions.y + 1, GridDimensions.z];
+
+        for (int x = 0; x < GridDimensions.x + 1; x++)
+            for (int y = 0; y < GridDimensions.y + 1; y++)
+                for (int z = 0; z < GridDimensions.z; z++)
+                {
+                    Edges[2][x, y, z] = new Edge(x, y, z, Axis.Z, this);
+                }
+
+        Edges[0] = new Edge[GridDimensions.x, GridDimensions.y + 1, GridDimensions.z + 1];
+
+        for (int x = 0; x < GridDimensions.x; x++)
+            for (int y = 0; y < GridDimensions.y + 1; y++)
+                for (int z = 0; z < GridDimensions.z + 1; z++)
+                {
+                    Edges[0][x, y, z] = new Edge(x, y, z, Axis.X, this);
+                }
+
+        Edges[1] = new Edge[GridDimensions.x + 1, GridDimensions.y, GridDimensions.z + 1];
+
+        for (int x = 0; x < GridDimensions.x + 1; x++)
+            for (int y = 0; y < GridDimensions.y; y++)
+                for (int z = 0; z < GridDimensions.z + 1; z++)
+                {
+                    Edges[1][x, y, z] = new Edge(x, y, z, Axis.Y, this);
+                }
     }
 
     public void SetRandomAlive(int PercentageAlive)
     {
-        int numberAlive = _gridDimensions.x * _gridDimensions.z * PercentageAlive / 100;
+        int numberAlive = GridDimensions.x * GridDimensions.z * PercentageAlive / 100;
 
         for (int i = 0; i < numberAlive; i++)
         {
-            int x = Random.Range(0, _gridDimensions.x);
-            int z = Random.Range(0, _gridDimensions.z);
+            int x = Random.Range(0, GridDimensions.x);
+            int z = Random.Range(0, GridDimensions.z);
 
-            if (_grid[x, 0, z].Status.Alive) i--;
-            _grid[x, 0, z].Status.Alive = true;
+            if (Voxels[x, 0, z].Status.Alive) i--;
+            Voxels[x, 0, z].Status.Alive = true;
         }
     }
 
     public void ResetGrid(bool alive)
     {
-        foreach (var voxel in _grid)
+        foreach (var voxel in Voxels)
         {
             voxel.Status.Alive = alive;
             voxel.Status.NextStatus = false;
@@ -59,7 +156,7 @@ public class VoxelGrid
 
     public void InvertGrid()
     {
-        foreach (var voxel in _grid)
+        foreach (var voxel in Voxels)
         {
             voxel.Status.Alive = !voxel.Status.Alive;
         }
@@ -84,7 +181,7 @@ public class VoxelGrid
         {
             Vector3Int neighbourIndex = index + direction;
             if (CheckIndex(neighbourIndex))
-                neighbours.Add(_grid[neighbourIndex.x, neighbourIndex.y, neighbourIndex.z]);
+                neighbours.Add(Voxels[neighbourIndex.x, neighbourIndex.y, neighbourIndex.z]);
         }
 
         return neighbours;
@@ -95,9 +192,9 @@ public class VoxelGrid
         if (index.x < 0) return false;
         if (index.y < 0) return false;
         if (index.z < 0) return false;
-        if (index.x > _gridDimensions.x - 1) return false;
-        if (index.y > _gridDimensions.y - 1) return false;
-        if (index.z > _gridDimensions.z - 1) return false;
+        if (index.x > GridDimensions.x - 1) return false;
+        if (index.y > GridDimensions.y - 1) return false;
+        if (index.z > GridDimensions.z - 1) return false;
 
         return true;
     }
@@ -110,23 +207,23 @@ public class VoxelGrid
             GameOfLifeRules(voxel);
         }*/
 
-        for (int x = 0; x < _gridDimensions.x; x++)
+        for (int x = 0; x < GridDimensions.x; x++)
         {
-            for (int z = 0; z < _gridDimensions.z; z++)
+            for (int z = 0; z < GridDimensions.z; z++)
             {
                 //only run game of life on the first layer
-                GameOfLifeRules(_grid[x, 0, z]);
+                GameOfLifeRules(Voxels[x, 0, z]);
 
                 for (int i = CurrentLayer; i > 0; i--)
                 {
-                    _grid[x, i, z].Status.NextStatus = _grid[x, i - 1, z].Status.Alive;
+                    Voxels[x, i, z].Status.NextStatus = Voxels[x, i - 1, z].Status.Alive;
                 }
             }
         }
         CurrentLayer++;
 
 
-        foreach (var voxel in _grid) voxel.Status.Alive = voxel.Status.NextStatus;
+        foreach (var voxel in Voxels) voxel.Status.Alive = voxel.Status.NextStatus;
 
 
     }
@@ -152,4 +249,59 @@ public class VoxelGrid
 
         return nrOfAliveNeighbours;
     }
+
+    private IEnumerable<Voxel> GetVoxels()
+    {
+        for (int x = 0; x < GridDimensions.x; x++)
+            for (int y = 0; y < GridDimensions.y; y++)
+                for (int z = 0; z < GridDimensions.z; z++)
+                    yield return Voxels[x, y, z];
+    }
+
+    private IEnumerable<Face> GetFaces()
+    {
+        for (int n = 0; n < 3; n++)
+        {
+            int xSize = Faces[n].GetLength(0);
+            int ySize = Faces[n].GetLength(1);
+            int zSize = Faces[n].GetLength(2);
+
+            for (int x = 0; x < xSize; x++)
+                for (int y = 0; y < ySize; y++)
+                    for (int z = 0; z < zSize; z++)
+                    {
+                        yield return Faces[n][x, y, z];
+                    }
+        }
+    }
+
+    //Explain linq
+
+    public void RemoveSingleVoxels()
+    {
+        var singleVoxels = GetVoxels().Where(v =>v.Status.Alive&& v.Faces.Where(f => f.IsActive).Count() == 0);
+        foreach (var vox in singleVoxels) vox.Status.Alive = false;
+        
+        
+        /*foreach (var voxel in GetVoxels())
+        {
+            int activeFaces = 0;
+            foreach (var face in voxel.Faces)
+            {
+                if (face.IsActive) activeFaces++;
+            }
+
+            if (activeFaces == 0) voxel.Status.Alive = false;
+        }*/
+
+    }
+
+    public void CreateGraph()
+    {
+        _graph.AddVertexRange(GetVoxels().Where(v => v.Status.Alive));
+        _graph.AddEdgeRange(GetFaces().Where(f => f.IsActive).Select(f=> new Edge<Voxel>(f.Voxels[0],f.Voxels[1])));
+        
+    }
+
+    
 }

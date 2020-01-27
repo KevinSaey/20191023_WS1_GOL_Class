@@ -55,7 +55,7 @@ public class Manager : MonoBehaviour
         {
             _grid.ResetGrid(false);
             _grid.SetRandomAlive(50);
-            
+
         }
         if (GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
             buttonWidth, buttonHeight), "Invert grid"))
@@ -78,25 +78,34 @@ public class Manager : MonoBehaviour
             _running = !_running;
         }
         _speed = GUI.HorizontalSlider(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
-            buttonWidth, buttonHeight), _speed, 0.01f, 1f);
+            buttonWidth, buttonHeight), _speed, 0.5f, 0.001f);
 
-        GUI.Label(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
-            buttonWidth, buttonHeight), (_grid.CurrentLayer+1).ToString());
+        if (_grid != null)
+            GUI.Label(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
+                buttonWidth, buttonHeight), (_grid.CurrentLayer).ToString());
+
+        if (_grid != null&&GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
+        buttonWidth, buttonHeight),
+         "Remove single voxels"))
+        {
+            _grid.RemoveSingleVoxels();
+        }
+
     }
 
     IEnumerator RunGameOfLife()
     {
         while (true)
         {
-            if (_grid.CurrentLayer == _gridDimension.y-1)
+            if (_grid.CurrentLayer == _gridDimension.y - 1)
             {
                 _running = false;
                 StopCoroutine(_runGameOfLife);
             }
 
             _grid.UpdateGrid();
-            
-            
+
+
 
             yield return new WaitForSeconds(_speed);
         }
