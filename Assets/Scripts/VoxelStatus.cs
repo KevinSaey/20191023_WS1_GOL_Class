@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class VoxelStatus : MonoBehaviour
 {
+    public Voxel Daddy;
     public bool Alive
     {
         get
@@ -16,7 +17,15 @@ public class VoxelStatus : MonoBehaviour
             _alive = value;
         }
     }
-    
+
+    public bool Collider
+    {
+        set
+        {
+            this.GetComponent<BoxCollider>().enabled = value;
+        }
+    }
+
     public Material GOMaterial
     {
         set

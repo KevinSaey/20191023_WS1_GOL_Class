@@ -14,7 +14,7 @@ public class VoxelGrid
     public float Margin;
 
     public int CurrentLayer = 0;
-    private UndirectedGraph<Voxel, Edge<Voxel>> _graph = new UndirectedGraph<Voxel, Edge<Voxel>>();
+    public UndirectedGraph<Voxel, Edge<Voxel>> Graph = new UndirectedGraph<Voxel, Edge<Voxel>>();
     private Material[] _materials;
     private Mesh _voxelMesh;
 
@@ -33,7 +33,7 @@ public class VoxelGrid
         GridDimensions = gridDimensions;
         VoxelSize = voxelSize;
         Margin = margin;
-        
+
 
         Corner = -new Vector3(gridDimensions.x, -voxelSize / 2, gridDimensions.y) * (VoxelSize + Margin) / 2;
 
@@ -221,7 +221,7 @@ public class VoxelGrid
             }
         }
         CurrentLayer++;
-        
+
         foreach (var voxel in Voxels) voxel.Status.Alive = voxel.Status.NextStatus;
 
         ColorVoxels();
@@ -249,7 +249,7 @@ public class VoxelGrid
         return nrOfAliveNeighbours;
     }
 
-    private IEnumerable<Voxel> GetVoxels()
+    public IEnumerable<Voxel> GetVoxels()
     {
         for (int x = 0; x < GridDimensions.x; x++)
             for (int y = 0; y < GridDimensions.y; y++)
@@ -303,8 +303,8 @@ public class VoxelGrid
 
     public void CreateGraph()
     {
-        _graph.AddVertexRange(GetVoxels().Where(v => v.Status.Alive));
-        _graph.AddEdgeRange(GetFaces().Where(f => f.IsActive).Select(f => new Edge<Voxel>(f.Voxels[0], f.Voxels[1])));
+        Graph.AddVertexRange(GetVoxels().Where(v => v.Status.Alive));
+        Graph.AddEdgeRange(GetFaces().Where(f => f.IsActive).Select(f => new Edge<Voxel>(f.Voxels[0], f.Voxels[1])));
     }
 
     public void ColorVoxels()
@@ -312,7 +312,34 @@ public class VoxelGrid
         foreach (var vox in Voxels)
         {
             vox.Status.GOMaterial = _materials[vox.NumberOfAliveFaces];
-            vox.Status.VoxelMesh = _voxelMesh;
+            if (_voxelMesh != null)
+            {
+                vox.Status.VoxelMesh = _voxelMesh;
+            }
         }
+    }
+    public void ColorVoxels(Voxel voxel, Material mat)
+    {
+        voxel.Status.GOMaterial = mat;
+    }
+
+    public void ColorVoxels(List<Voxel> voxels, Material mat)
+    {
+        foreach (var vox in voxels)
+        {
+            vox.Status.GOMaterial = mat;
+        }
+    }
+
+    public void ToggleColliderInactive(bool active)
+    {
+        var voxels = GetVoxels()
+            .Where(v => v.Status.Alive == false);
+
+        foreach (var vox in voxels)
+        {
+            vox.Status.Collider = active;
+        }
+
     }
 }

@@ -12,7 +12,9 @@ public class Voxel
     public List<Face> Faces = new List<Face>(6);
 
     public int NumberOfAliveFaces => Faces.Where(f => f.IsActive).Count();
-  
+
+    public bool IsSkin => Status.Alive && Faces.Any(f => f.IsSkin);
+
     public Voxel(Vector3Int index, float voxelSize, float margin, Vector3Int gridDimension, Vector3 startingPoint)
     {
         Index = index;
@@ -29,6 +31,7 @@ public class Voxel
         _goVoxel.transform.position = startingPoint + (Vector3)Index * (voxelSize + margin);
         Status = _goVoxel.AddComponent<VoxelStatus>();
         Status.Alive = false;
+        Status.Daddy = this;
     }
 
 

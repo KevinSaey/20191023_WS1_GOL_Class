@@ -17,14 +17,19 @@ public class Manager : MonoBehaviour
     private Material[] _materials = new Material[6];
     [SerializeField]
     private Mesh _voxelMesh;
+    [SerializeField]
+    private Material _highlightMat;
 
     private bool _running = false;
+    private bool _shortestPath = false;
+    private bool _toggleDirty = false;
     private IEnumerator _runGameOfLife;
+    private Voxel _startVox, _endVox;
 
     // Start is called before the first frame update
     void Start()
     {
-        _grid = new VoxelGrid(_gridDimension, _voxelSize, _margin, _materials,_voxelMesh);
+        _grid = new VoxelGrid(_gridDimension, _voxelSize, _margin, _materials, _voxelMesh);
         _runGameOfLife = RunGameOfLife();
     }
 
@@ -41,7 +46,21 @@ public class Manager : MonoBehaviour
                 {
                     GameObject hitObject = hit.transform.gameObject;
                     var status = hitObject.GetComponent<VoxelStatus>();
-                    status.Alive = !status.Alive;
+
+                    if (_shortestPath)
+                    {
+
+                        _grid.ColorVoxels(status.Daddy, _highlightMat);
+
+                        if (_startVox == null)
+                            _startVox = status.Daddy;
+                        else
+                            _endVox = status.Daddy;
+                    }
+                    else
+                    {
+                        status.Alive = !status.Alive;
+                    }
                 }
             }
         }
@@ -88,12 +107,29 @@ public class Manager : MonoBehaviour
             GUI.Label(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
                 buttonWidth, buttonHeight), (_grid.CurrentLayer).ToString());
 
-        if (_grid != null&&GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
+        if (_grid != null && GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
         buttonWidth, buttonHeight),
          "Remove single voxels"))
         {
             _grid.RemoveSingleVoxels();
         }
+
+        if (_grid != null && !_shortestPath && _startVox == null && _endVox == null &&
+        GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
+        buttonWidth, buttonHeight), "Select voxel"))
+        {
+            _shortestPath = true;
+            _grid.ToggleColliderInactive(false);
+        }
+
+        if (_grid != null && _shortestPath && _startVox != null && _endVox != null &&
+            GUI.Button(new Rect(padding, padding + ((buttonHeight + padding) * buttonCounter++),
+            buttonWidth, buttonHeight), "Generate shortest path"))
+        {
+            List<Voxel> shortestPath = PathFinding.CalculateShortestPath(_grid.Graph, _startVox, _endVox);
+            _grid.ColorVoxels(shortestPath, _highlightMat);
+        }
+
 
     }
 
@@ -104,6 +140,7 @@ public class Manager : MonoBehaviour
             if (_grid.CurrentLayer == _gridDimension.y - 1)
             {
                 _running = false;
+                _grid.CreateGraph();
                 StopCoroutine(_runGameOfLife);
             }
 
